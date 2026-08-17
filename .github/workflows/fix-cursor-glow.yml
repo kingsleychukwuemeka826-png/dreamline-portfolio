@@ -1,0 +1,31 @@
+name: Fix cursor glow
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reduce cursor glow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = 'background:radial-gradient(circle 280px at var(--mx,50%) var(--my,30%),rgba(44,95,138,.09),transparent 70%)'
+          new = 'background:radial-gradient(circle 150px at var(--mx,50%) var(--my,30%),rgba(44,95,138,.035),transparent 70%)'
+          s = s.replace(old, new)
+          s = s.replace('.dev-field{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;opacity:.7}', '.dev-field{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;opacity:.9}')
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Reduce cursor glow over development background'
+          git push
